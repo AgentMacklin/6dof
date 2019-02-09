@@ -2,12 +2,12 @@
 % Transform from vehicle frame to inertial frame
 
 function transform = transVtoI(phi, theta, psi)
-    c_tht = cos(deg2rad(theta));
-    c_phi = cos(deg2rad(phi));
-    c_psi = cos(deg2rad(psi));
-    s_tht = sin(deg2rad(theta));
-    s_phi = sin(deg2rad(phi));
-    s_psi = sin(deg2rad(psi));
+    c_tht = cosd(theta);
+    c_phi = cosd(phi);
+    c_psi = cosd(psi);
+    s_tht = sind(theta);
+    s_phi = sind(phi);
+    s_psi = sind(psi);
 
     transform = [c_tht * c_psi, c_tht * s_psi, -s_tht;         % row 1
                  s_phi * s_tht * c_psi - s_psi * c_phi,...     % -----
