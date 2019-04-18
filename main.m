@@ -1,14 +1,14 @@
 % Austen LeBeau
 % T-37 6DOF
 
-clear all;
+clear;
 clc;
 
 %% Physical constants
 params.g = 32.174; %ft/sec^2
 
 t = 0; % initial time
-maxTime = 50; % estimated maximum flight time in sec
+maxTime = 200; % estimated maximum flight time in sec
 dt = 0.1; % integration interval in sec
 maxNum = maxTime / dt; % maximum number of steps in integration loop
 
@@ -86,6 +86,20 @@ xDot = dxdt(t, ipl, params, controls); % initial xDot = [velocity and accelerati
 
 %% Start recording data for output & plots
 
+% Preallocating vectors
+% vecSize = maxNum - 1;
+% speed = zeros(vecSize);
+% machNumber = zeros(vecSize);
+% flightPathAngle = zeros(vecSize);
+% altitude = zeros(vecSize);
+% AOA = zeros(vecSize);
+% AlphaDot = zeros(vecSize);
+% sideSlip = zeros(vecSize);
+% elevator = zeros(vecSize);
+% rudder = zeros(vecSize);
+% aileron = zeros(vecSize);
+
+
 speed(1) = norm(ipl(4:6));           % Magnitude of xVector(4) through xVector(6).
 output_vector(1, :) = [t, ipl'];     % output time, position, velocity, acceleration
 altitude(1) = -ipl(3);
@@ -99,6 +113,7 @@ rudder(1) = 0;
 aileron(1) = 0;
 
 flightParameters(1, :) = [t elevator(1) rudder(1) aileron(1) ipl(1:6)' AOA(1) sideSlip(1) ipl(10:12)'];
+
 
 %% Trajectory Computation Loop
 for ind = 2:maxNum
@@ -145,7 +160,6 @@ figure(1)
 
 grid on;
 plot(output_vector(:,1),output_vector(:,12),'k','linewidth',3)
-saveas(gcf, "test.png");
 grid on;
 figure(2)
 
