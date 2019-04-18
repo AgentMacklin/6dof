@@ -40,13 +40,15 @@ function xDot =  dxdt(t, ipl, params, controls)
     pDot = (Izz * moment(1) + Ixz * moment(3) - (Ixz * (Iyy - Ixx - Izz) * ipl(7) ...
             + (Ixz^2 + Izz * (Izz - Iyy)) * ipl(9)) * ipl(8)) / (Ixx * Izz - Ixz^2);
     
-    qDot = 0; % q dot 
-    rDot = 0; % r dot equation
+    qDot = (Izz * moment(1) + Ixz * moment(3) - (Ixz * (Iyy - Ixx - Izz) * ipl(7) ...
+            + (Ixz^2 + Izz * (Izz - Iyy)) * ipl(9)) * ipl(8)) / (Ixx * Izz - Ixz^2); % q dot 
+
+    rDot = (Izz * moment(1) + Ixz * moment(3) - (Ixz * (Iyy - Ixx - Izz) * ipl(7) ...
+            + (Ixz^2 + Izz * (Izz - Iyy)) * ipl(9)) * ipl(8)) / (Ixx * Izz - Ixz^2); % r dot equation
     
     phiDot = ipl(7) + tan(ipl(11)) * (ipl(8) * sin(ipl(10)) + ipl(9) * cos(ipl(10)));
     thetaDot = ipl(8) * cos(ipl(10)) - ipl(9) * sin(ipl(10));   % theta dot equation
     psiDot = (ipl(8) * sin(ipl(10)) + ipl(9) * cos(ipl(10))) * sec(ipl(11));
 
-    % psi dot equation
     xDot = [vInertial; uDot; vDot; wDot; pDot; qDot; rDot; phiDot; thetaDot; psiDot];
 end

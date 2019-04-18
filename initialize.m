@@ -20,12 +20,15 @@ function [Alpha, T, ipl, delta_e0] = initialize(ipl, params)
     Alpha = 0;
 
     % Iterate to find Alpha and delta_e0
-    while abs(Alpha - Alpha1) > 1e-10
+    for i = 1:100
+        delta_e1 = (-Cm0 - CmAlpha*Alpha1)/CmDelta_e;
+        C_lift = CL0 + CLAlpha*Alpha1 + CLdelta_e*delta_e1;
+        CD = params.CD0 + C_lift^2/(pi*params.AR*params.OSE);
+        Alpha = (weight/(dynPress*Sref)-CL0-CLdelta_e*delta_e1)/(CLAlpha+CD);
+        if abs(Alpha-Alpha1)<1e-10
+            break
+        end
         Alpha1 = Alpha;
-        delta_e1 = (-Cm0 - CmAlpha * Alpha1) / CmDelta_e;
-        C_lift = CL0 + CLAlpha * Alpha1 + CLdelta_e * delta_e1;
-        CD = params.CD0 + C_lift^2 / (pi * params.AR * params.OSE);
-        Alpha = (weight / (dynPress * Sref) - CL0 - CLdelta_e * delta_e1) / (CLAlpha + CD);
     end
 
     Alpha = Alpha1;

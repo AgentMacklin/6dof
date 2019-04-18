@@ -8,7 +8,7 @@ clc;
 params.g = 32.174; %ft/sec^2
 
 t = 0; % initial time
-maxTime = 200; % estimated maximum flight time in sec
+maxTime = 100; % estimated maximum flight time in sec
 dt = 0.1; % integration interval in sec
 maxNum = maxTime / dt; % maximum number of steps in integration loop
 
@@ -29,7 +29,7 @@ params.OSE = 1; % Oswald span efficiency
 params.CLAlpha = 5.184; % per radian
 params.CL0 = 0.2;
 params.CLdelta_e = 0.5; % per radian
-params.CD0 = 0.0217;
+params.CD0 = 0.0227;
 params.weight = params.mass * params.g;
 params.Cm0 = 0.0244;
 params.CmAlpha = -.7; % per radian
@@ -45,16 +45,16 @@ params.CydeltaR = 0.2; % per radian
 params.Croll0 = 0;
 params.Cyaw0 = 0;
 params.CrollBeta = -0.0945;
-params.CrollP = -0.4426 * (params.wingSpan / (2 * params.SpdCmd));
-params.CrollR = 0.0927 * (params.wingSpan / (2 * params.SpdCmd));
+params.CrollP = -0.4426; % * (params.wingSpan / (2 * params.SpdCmd));
+params.CrollR = 0.0927; % * (params.wingSpan / (2 * params.SpdCmd));
 params.CrollDeltaA = 0.1813;
 params.CrollDeltaR = 0.015;
 params.Cn0 = 0;
 params.CnBeta = 0.111;
 params.CnDeltaA = -0.039;
 params.CnDeltaR = -0.036;
-params.CnR = -0.1394 * (params.wingSpan / (2 * params.SpdCmd));
-params.CnP = -0.0244 * (params.wingSpan / (2 * params.SpdCmd));
+params.CnR = -0.1394; % * (params.wingSpan / (2 * params.SpdCmd));
+params.CnP = -0.0244; % * (params.wingSpan / (2 * params.SpdCmd));
 controls.delta_e_gain1 = -2e-04;
 controls.delta_e_gain2 = -1e-03;
 
@@ -87,17 +87,16 @@ xDot = dxdt(t, ipl, params, controls); % initial xDot = [velocity and accelerati
 %% Start recording data for output & plots
 
 % Preallocating vectors
-% vecSize = maxNum - 1;
-% speed = zeros(vecSize);
-% machNumber = zeros(vecSize);
-% flightPathAngle = zeros(vecSize);
-% altitude = zeros(vecSize);
-% AOA = zeros(vecSize);
-% AlphaDot = zeros(vecSize);
-% sideSlip = zeros(vecSize);
-% elevator = zeros(vecSize);
-% rudder = zeros(vecSize);
-% aileron = zeros(vecSize);
+speed = zeros(1, maxNum)';
+machNumber = zeros(1, maxNum)';
+flightPathAngle = zeros(1, maxNum)';
+altitude = zeros(1, maxNum)';
+AOA = zeros(1, maxNum)';
+AlphaDot = zeros(1, maxNum)';
+sideSlip = zeros(1, maxNum)';
+elevator = zeros(1, maxNum)';
+rudder = zeros(1, maxNum)';
+aileron = zeros(1, maxNum)';
 
 
 speed(1) = norm(ipl(4:6));           % Magnitude of xVector(4) through xVector(6).
@@ -146,101 +145,13 @@ for ind = 2:maxNum
     flightParameters(ind, :) = [t elevator(ind) rudder(ind) aileron(ind) ipl(1:6) AOA(ind) ...
                                 sideSlip(ind) ipl(10:12)];
 
-    fprintf('Time:      %10.3f\n', monitor(1));
-    fprintf('Side slip: %10.3f\n', monitor(2));
-    fprintf('Delta-R:   %10.3f\n', monitor(3));
-    fprintf('Altitude:  %10.3f\n', monitor(4));
+    fprintf('Time:\t%.3f\r', monitor(1));
+    % fprintf('Side slip:   %-10.3f\r', monitor(2));
+    % fprintf('Delta-R:     %-10.3f\r', monitor(3));
+    % fprintf('Altitude:    %-10.3f\r', monitor(4));
 end
 
 csvwrite('trajectory.csv', output_vector);
 csvwrite('flightParameters.csv', flightParameters);
 
 %% Plot results
-figure(1)
-
-grid on;
-plot(output_vector(:,1),output_vector(:,12),'k','linewidth',3)
-grid on;
-figure(2)
-
-grid on;
-plot(output_vector(:,3),-output_vector(:,4),'k','linewidth',3)
-grid on;
-figure(3)
-
-grid on;
-plot(output_vector(:,1),speed,'k','linewidth',3)
-grid on;
-figure(4)
-
-grid on;
-plot3(output_vector(:,2),output_vector(:,3),-output_vector(:,4),'k','linewidth',3)
-axis equal;
-grid on;
-figure(5)
-
-grid on;
-plot(output_vector(:,1),flightPathAngle(:),'k','linewidth',3)
-grid on;
-figure(6)
-
-grid on;
-plot(output_vector(:,1),altitude(:),'k','linewidth',3)
-grid on;
-figure(7)
-
-grid on;
-plot(output_vector(:,1),AlphaDot(:),'k','linewidth',3)
-grid on;
-figure(8)
-
-grid on;
-plot(output_vector(:,1),output_vector(:,9),'k','linewidth',3)
-grid on;
-figure(9)
-
-grid on;
-plot(output_vector(:,1),output_vector(:,5),'k','linewidth',3)
-grid on;
-figure(10)
-
-grid on;
-plot(output_vector(:,1),output_vector(:,7),'k','linewidth',3)
-grid on;
-figure(11)
-
-grid on;
-plot(output_vector(:,1),rudder(:),'k','linewidth',3)
-grid on;
-figure(12)
-
-grid on;
-plot(output_vector(:,1),sideSlip(:),'k','linewidth',3)
-grid on;
-figure(13)
-
-grid on;
-plot(output_vector(:,1),output_vector(:,11)*180/pi,'k','linewidth',3)
-grid on;
-figure(14)
-
-grid on;
-hold on;
-plot(output_vector(:,1),output_vector(:,11)*180/pi,'k','linewidth',3)
-plot(output_vector(:,1),output_vector(:,13)*180/pi,'r','linewidth',3)
-hold on;
-grid on;
-figure(15)
-
-grid on;
-plot(sideSlip(:),AOA(:),'k','linewidth',3)
-grid on;
-figure(16)
-
-grid on;
-hold on;
-plot(output_vector(:,1),sideSlip(:),'k','linewidth',3)
-plot(output_vector(:,1),output_vector(:,11)*180/pi,'r','linewidth',3)
-hold on;
-grid on;
-
