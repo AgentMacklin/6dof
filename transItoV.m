@@ -1,13 +1,13 @@
 % Austen LeBeau
 % Transform from vehicle frame to inertial frame
 
-function transform = transVtoI(phi, theta, psi)
-    c_tht = cosd(theta);
-    c_phi = cosd(phi);
-    c_psi = cosd(psi);
-    s_tht = sind(theta);
-    s_phi = sind(phi);
-    s_psi = sind(psi);
+function transform = transItoV(ipl)
+    c_tht = cosd(ipl(1));
+    c_phi = cosd(ipl(1));
+    c_psi = cosd(ipl(3));
+    s_tht = sind(ipl(1));
+    s_phi = sind(ipl(1));
+    s_psi = sind(ipl(3));
 
     transform = [c_tht * c_psi, c_tht * s_psi, -s_tht;         % row 1
                  s_phi * s_tht * c_psi - s_psi * c_phi,...     % -----

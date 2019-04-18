@@ -2,12 +2,13 @@
 % T-37 6DOF
 
 clear all;
+clc;
 
 %% Physical constants
 params.g = 32.174; %ft/sec^2
 
 t = 0; % initial time
-maxTime = 200; % estimated maximum flight time in sec
+maxTime = 50; % estimated maximum flight time in sec
 dt = 0.1; % integration interval in sec
 maxNum = maxTime / dt; % maximum number of steps in integration loop
 
@@ -25,7 +26,7 @@ params.cbar = 5.47; % feet
 params.Sref = 182; % ft^2
 params.AR = params.wingSpan^2 / params.Sref;
 params.OSE = 1; % Oswald span efficiency
-params.CLalpha = 5.184; % per radian
+params.CLAlpha = 5.184; % per radian
 params.CL0 = 0.2;
 params.CLdelta_e = 0.5; % per radian
 params.CD0 = 0.0217;
@@ -48,6 +49,7 @@ params.CrollP = -0.4426 * (params.wingSpan / (2 * params.SpdCmd));
 params.CrollR = 0.0927 * (params.wingSpan / (2 * params.SpdCmd));
 params.CrollDeltaA = 0.1813;
 params.CrollDeltaR = 0.015;
+params.Cn0 = 0;
 params.CnBeta = 0.111;
 params.CnDeltaA = -0.039;
 params.CnDeltaR = -0.036;
@@ -72,32 +74,36 @@ controls.delta_e_gain2 = -1e-03;
 
 %% Initial Conditions
 ipl = [0; 0; -params.AltCmd; params.SpdCmd; 0; 0; 0; 0; 0; 0; params.thetea0; 0];
-[alpha, Thrust, ipl, delta_e0] = getInit(ipl, params);
+[Alpha, Thrust, ipl, delta_e0] = initialize(ipl, params);
 params.Thrust = Thrust;
+
 controls.delta_e0 = delta_e0;
 controls.delta_e = delta_e0;
 controls.delta_a = 0;
 controls.delta_r = 0;
+
 xDot = dxdt(t, ipl, params, controls); % initial xDot = [velocity and acceleration]. dxdt is a function.
 
-% Start recording data for output & plots
-speed(1) = norm(ipl(4:6)); % Magnitude of xVector(4) through xVector(6).
-output_vector(1, :) = [t, ipl']; % output time, position, velocity, acceleration
+%% Start recording data for output & plots
+
+speed(1) = norm(ipl(4:6));           % Magnitude of xVector(4) through xVector(6).
+output_vector(1, :) = [t, ipl'];     % output time, position, velocity, acceleration
 altitude(1) = -ipl(3);
 AOA(1) = atand(ipl(6) / ipl(4));
-alphaDot(1) = 0;
+AlphaDot(1) = 0;
 sideSlip(1) = asind(ipl(5) / speed(1));
-vI = transformItoV(ipl(10:12))' * ipl(4:6);
-FPA(1) = atand(vI(3) / sqrt(vI(1)^2 + vI(2)^2));
+vI = transItoV(ipl(10:12))' * ipl(4:6);
+flightPathAngle(1) = atand(vI(3) / sqrt(vI(1)^2 + vI(2)^2));
 elevator(1) = controls.delta_e * 180 / pi;
 rudder(1) = 0;
 aileron(1) = 0;
 
-flightParameters(1, :) = [t elevator(1) rudder(1) aileron(1) ipl(1:6)' AOA(1) ...
-                        sideSlip(1) ipl(10:12)'];
+flightParameters(1, :) = [t elevator(1) rudder(1) aileron(1) ipl(1:6)' AOA(1) sideSlip(1) ipl(10:12)'];
 
 %% Trajectory Computation Loop
 for ind = 2:maxNum
+
+
     [controls] = getControls(t, ipl, params, controls, vI);
     [T, X] = ode45(@(t, ipl)dxdt(t, ipl, params, controls), [t t+dt], ipl); % x and time are values of xVector at t+dt
     t = T(end); % last element in the "time" vector
@@ -108,13 +114,13 @@ for ind = 2:maxNum
     xDot = dxdt(t, ipl', params, controls);
     output_vector(ind, :) = [t, ipl]; % xDot(4:6) is acceleration
     speed(ind) = norm(ipl(4:6)); % magnitude of velocity
-    [rho, acousticSpeed] = getRhoBritish(-ipl(3));
+    [rho, acousticSpeed] = atmosphere(-ipl(3));
     machNumber(ind) = speed(ind) / acousticSpeed;
-    vI = transformItoV(ipl(10:12)) \ ipl(4:6)';
-    FPA(ind) = atand(vI(3) / sqrt(vI(1)^2 + vI(2)^2));
+    vI = transItoV(ipl(10:12)) \ ipl(4:6)';
+    flightPathAngle(ind) = atand(vI(3) / sqrt(vI(1)^2 + vI(2)^2));
     altitude(ind) = -ipl(3);
     AOA(ind) = atand(ipl(6) / ipl(4)); %angle-of-attack in degrees for output
-    alphaDot(ind) = (xDot(4) * ipl(6) - xDot(6) * ipl(4)) / (ipl(4)^2 + ipl(6)^2);
+    AlphaDot(ind) = (xDot(4) * ipl(6) - xDot(6) * ipl(4)) / (ipl(4)^2 + ipl(6)^2);
     sideSlip(ind) = asind(ipl(5) / speed(ind)); %sideslip angle in degrees for output
     elevator(ind) = controls.delta_e * 180 / pi; % elevator deflection history in degrees
     rudder(ind) = controls.delta_r * 180 / pi; %rudder deflection in degrees
@@ -125,9 +131,102 @@ for ind = 2:maxNum
     flightParameters(ind, :) = [t elevator(ind) rudder(ind) aileron(ind) ipl(1:6) AOA(ind) ...
                                 sideSlip(ind) ipl(10:12)];
 
-    fprintf('Monitor: %10.3f', monitor);
-
+    fprintf('Time:      %10.3f\n', monitor(1));
+    fprintf('Side slip: %10.3f\n', monitor(2));
+    fprintf('Delta-R:   %10.3f\n', monitor(3));
+    fprintf('Altitude:  %10.3f\n', monitor(4));
 end
 
 csvwrite('trajectory.csv', output_vector);
 csvwrite('flightParameters.csv', flightParameters);
+
+%% Plot results
+figure(1)
+
+grid on;
+plot(output_vector(:,1),output_vector(:,12),'k','linewidth',3)
+saveas(gcf, "test.png");
+grid on;
+figure(2)
+
+grid on;
+plot(output_vector(:,3),-output_vector(:,4),'k','linewidth',3)
+grid on;
+figure(3)
+
+grid on;
+plot(output_vector(:,1),speed,'k','linewidth',3)
+grid on;
+figure(4)
+
+grid on;
+plot3(output_vector(:,2),output_vector(:,3),-output_vector(:,4),'k','linewidth',3)
+axis equal;
+grid on;
+figure(5)
+
+grid on;
+plot(output_vector(:,1),flightPathAngle(:),'k','linewidth',3)
+grid on;
+figure(6)
+
+grid on;
+plot(output_vector(:,1),altitude(:),'k','linewidth',3)
+grid on;
+figure(7)
+
+grid on;
+plot(output_vector(:,1),AlphaDot(:),'k','linewidth',3)
+grid on;
+figure(8)
+
+grid on;
+plot(output_vector(:,1),output_vector(:,9),'k','linewidth',3)
+grid on;
+figure(9)
+
+grid on;
+plot(output_vector(:,1),output_vector(:,5),'k','linewidth',3)
+grid on;
+figure(10)
+
+grid on;
+plot(output_vector(:,1),output_vector(:,7),'k','linewidth',3)
+grid on;
+figure(11)
+
+grid on;
+plot(output_vector(:,1),rudder(:),'k','linewidth',3)
+grid on;
+figure(12)
+
+grid on;
+plot(output_vector(:,1),sideSlip(:),'k','linewidth',3)
+grid on;
+figure(13)
+
+grid on;
+plot(output_vector(:,1),output_vector(:,11)*180/pi,'k','linewidth',3)
+grid on;
+figure(14)
+
+grid on;
+hold on;
+plot(output_vector(:,1),output_vector(:,11)*180/pi,'k','linewidth',3)
+plot(output_vector(:,1),output_vector(:,13)*180/pi,'r','linewidth',3)
+hold on;
+grid on;
+figure(15)
+
+grid on;
+plot(sideSlip(:),AOA(:),'k','linewidth',3)
+grid on;
+figure(16)
+
+grid on;
+hold on;
+plot(output_vector(:,1),sideSlip(:),'k','linewidth',3)
+plot(output_vector(:,1),output_vector(:,11)*180/pi,'r','linewidth',3)
+hold on;
+grid on;
+

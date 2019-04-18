@@ -2,7 +2,7 @@
 % Aero 3220
 % Function that returns atmospheric data in imperial units.
 
-function [P, T, rho, acoustic_speed] = atmosphere(x)
+function [rho, acoustic_speed] = atmosphere(x)
 
 % Constants
     z0 = 0;                     % ground altitude (MSL)
@@ -15,7 +15,7 @@ function [P, T, rho, acoustic_speed] = atmosphere(x)
 
 
 % Atmosphere Model
-    z = x(3);
+    z = x;
     T = T0 + lapse_rate * (z - z0);                 % Temperature at altitude z, degree R
     P = P0 * (T / T0) ^ (-g / (lapse_rate * R)) ;   % Pressure at altitude z
     rho = P / (R * T);                              % Density at altitude z
